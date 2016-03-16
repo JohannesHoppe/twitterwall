@@ -22,6 +22,10 @@ exports.getAll = function(req, res, next){
     if(req.query.noretweeted == '1')
       tweets = tweets.filter(removeRetweeted);
 
+    if (!tweets) {
+        return res.json([]);
+    }
+
     tweets = tweets.map(tweet);
 
     if(exiles)
