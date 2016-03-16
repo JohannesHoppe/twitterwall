@@ -1,5 +1,7 @@
 import {Directive, Input, Output} from 'angular2/core';
 import {EventEmitter, ElementRef, ViewContainerRef} from 'angular2/core';
+import {Observable} from 'rxjs/Rx';
+import 'rxjs/add/operator/throttleTime';
 import {AppConfig} from '../config';
 
 @Directive({ selector: '[spScrollHorizontal]' })
@@ -11,17 +13,16 @@ export class TweetWallScrollHorizontal {
   ) { }
 
   @Input() set spScrollHorizontal(condition: boolean) {
-    var tweetWall = this._viewContainer.element.nativeElement;
-    var tweetWallPaddingTop = 8;
-    var tweetWallPaddingBottom = 8;
 
-    var windowHeight = window.innerHeight;
-    var navbarHeight = document.getElementsByClassName("sp-navbar")[0]['offsetHeight'];
-    var footerHeight = document.getElementsByTagName("footer")[0]['offsetHeight'];
+    var throttled = Observable
+      .fromEvent(window, 'resize')
+      .throttleTime(250)
+      .subscribe(() => this.adjustHeight());
 
-    tweetWall.style.height = `${windowHeight - navbarHeight - footerHeight - tweetWallPaddingTop - tweetWallPaddingBottom - 1}px`;
+    this.startScrollIntervall(AppConfig['scrollIntervall']);
 
-    this.startScrollIntervall(AppConfig.scrollIntervall);
+    // initial adjustment
+    this.adjustHeight();
   }
 
   private startScrollIntervall(intervall) {
@@ -36,5 +37,18 @@ export class TweetWallScrollHorizontal {
       this.reachedEnd.emit(true);
       window.scroll(0,0);
     }
+  }
+
+  private adjustHeight() {
+
+    var tweetWall = this._viewContainer.element.nativeElement;
+    var tweetWallPaddingTop = 8;
+    var tweetWallPaddingBottom = 8;
+
+    var windowHeight = window.innerHeight;
+    var navbarHeight = document.getElementsByClassName("sp-navbar")[0]['offsetHeight'];
+    var footerHeight = document.getElementsByTagName("footer")[0]['offsetHeight'];
+
+    tweetWall.style.height = `${windowHeight - navbarHeight - footerHeight - tweetWallPaddingTop - tweetWallPaddingBottom - 1}px`;
   }
 }
